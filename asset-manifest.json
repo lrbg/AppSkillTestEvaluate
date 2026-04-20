@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/AppSkillTestEvaluate/static/css/main.84b69dd6.css",
+    "main.js": "/AppSkillTestEvaluate/static/js/main.de4d13b8.js",
+    "index.html": "/AppSkillTestEvaluate/index.html",
+    "main.84b69dd6.css.map": "/AppSkillTestEvaluate/static/css/main.84b69dd6.css.map",
+    "main.de4d13b8.js.map": "/AppSkillTestEvaluate/static/js/main.de4d13b8.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.84b69dd6.css",
+    "static/js/main.de4d13b8.js"
+  ]
+}
