@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/AppSkillTestEvaluate/static/css/main.5668f4f2.css",
-    "main.js": "/AppSkillTestEvaluate/static/js/main.7d327d90.js",
+    "main.css": "/AppSkillTestEvaluate/static/css/main.0cad0c8f.css",
+    "main.js": "/AppSkillTestEvaluate/static/js/main.50e83994.js",
     "index.html": "/AppSkillTestEvaluate/index.html",
-    "main.5668f4f2.css.map": "/AppSkillTestEvaluate/static/css/main.5668f4f2.css.map",
-    "main.7d327d90.js.map": "/AppSkillTestEvaluate/static/js/main.7d327d90.js.map"
+    "main.0cad0c8f.css.map": "/AppSkillTestEvaluate/static/css/main.0cad0c8f.css.map",
+    "main.50e83994.js.map": "/AppSkillTestEvaluate/static/js/main.50e83994.js.map"
   },
   "entrypoints": [
-    "static/css/main.5668f4f2.css",
-    "static/js/main.7d327d90.js"
+    "static/css/main.0cad0c8f.css",
+    "static/js/main.50e83994.js"
   ]
 }
