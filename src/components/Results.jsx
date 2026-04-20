@@ -1,7 +1,31 @@
+import { useEffect, useRef } from 'react';
 import { formatDuration } from '../utils/scoring';
+import { generateHTMLReport } from '../utils/reportGenerator';
+
+function triggerDownload(html, filename) {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
 
 export default function Results({ reportData, onRestart }) {
+  const downloaded = useRef(false);
   const { candidateName, score, durationSeconds } = reportData;
+
+  useEffect(() => {
+    if (downloaded.current) return;
+    downloaded.current = true;
+    const html = generateHTMLReport(reportData);
+    const safeName = candidateName.replace(/\s+/g, '-').toLowerCase();
+    const date = new Date().toISOString().slice(0, 10);
+    triggerDownload(html, `reporte-qa-${safeName}-${date}.html`);
+  }, [reportData, candidateName]);
   const { earned, total, percentage, level, blockScores } = score;
   const duration = formatDuration(durationSeconds);
 
@@ -71,11 +95,24 @@ export default function Results({ reportData, onRestart }) {
         <div className="results-footer">
           <div className="results-note">
             <span>✅</span>
-            <span>Tu resultado ha sido guardado. El evaluador podrá revisar el reporte detallado.</span>
+            <span>Evaluación completada. El reporte HTML se descargó automáticamente.</span>
           </div>
-          <button className="btn-primary" onClick={onRestart}>
-            Nueva Evaluación
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                const html = generateHTMLReport(reportData);
+                const safeName = candidateName.replace(/\s+/g, '-').toLowerCase();
+                const date = new Date().toISOString().slice(0, 10);
+                triggerDownload(html, `reporte-qa-${safeName}-${date}.html`);
+              }}
+            >
+              ⬇ Descargar reporte nuevamente
+            </button>
+            <button className="btn-primary" onClick={onRestart}>
+              Nueva Evaluación
+            </button>
+          </div>
         </div>
 
       </div>

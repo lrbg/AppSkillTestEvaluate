@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { getAllReports, deleteReport, clearAllReports } from '../utils/storage';
-import { generateHTMLReport } from '../utils/reportGenerator';
+import { generateHTMLReport, generateGeneralReport } from '../utils/reportGenerator';
 import { formatDuration } from '../utils/scoring';
+
+function triggerDownload(html, filename) {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
 
 export default function AdminDashboard() {
   const [reports, setReports] = useState([]);
@@ -31,6 +43,22 @@ export default function AdminDashboard() {
 
   function openHTMLReport(report) {
     const html = generateHTMLReport(report);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  function downloadGeneralReport() {
+    const html = generateGeneralReport(reports);
+    if (!html) return;
+    const date = new Date().toISOString().slice(0, 10);
+    triggerDownload(html, `reporte-general-qa-${date}.html`);
+  }
+
+  function openGeneralReport() {
+    const html = generateGeneralReport(reports);
+    if (!html) return;
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
@@ -39,12 +67,8 @@ export default function AdminDashboard() {
 
   function downloadHTMLReport(report) {
     const html = generateHTMLReport(report);
-    const blob = new Blob([html], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `reporte-qa-${report.candidateName.replace(/\s+/g, '-').toLowerCase()}-${new Date(report.savedAt).toISOString().slice(0,10)}.html`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    const safeName = report.candidateName.replace(/\s+/g, '-').toLowerCase();
+    triggerDownload(html, `reporte-qa-${safeName}-${new Date(report.savedAt).toISOString().slice(0,10)}.html`);
   }
 
   const filtered = reports
@@ -119,9 +143,17 @@ export default function AdminDashboard() {
             ))}
           </div>
           {reports.length > 0 && (
-            <button className="btn-danger-sm" onClick={() => setShowDeleteAll(true)}>
-              🗑 Limpiar todo
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+              <button className="btn-action view" style={{ padding: '7px 14px', fontSize: '13px' }} onClick={openGeneralReport}>
+                📊 Ver reporte general
+              </button>
+              <button className="btn-action download" style={{ padding: '7px 14px', fontSize: '13px' }} onClick={downloadGeneralReport}>
+                ⬇ Descargar reporte general
+              </button>
+              <button className="btn-danger-sm" onClick={() => setShowDeleteAll(true)}>
+                🗑 Limpiar todo
+              </button>
+            </div>
           )}
         </div>
 
