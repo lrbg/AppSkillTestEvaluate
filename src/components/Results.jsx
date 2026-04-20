@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDuration } from '../utils/scoring';
 import { generateHTMLReport } from '../utils/reportGenerator';
+import { saveReportToGitHub, hasToken } from '../utils/githubStorage';
 
 function triggerDownload(html, filename) {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -15,32 +16,49 @@ function triggerDownload(html, filename) {
 }
 
 export default function Results({ reportData, onRestart }) {
-  const downloaded = useRef(false);
+  const done = useRef(false);
+  const [githubStatus, setGithubStatus] = useState('idle'); // idle | saving | saved | error
   const { candidateName, score, durationSeconds } = reportData;
+  const { earned, total, percentage, level, blockScores } = score;
+  const duration = formatDuration(durationSeconds);
 
   useEffect(() => {
-    if (downloaded.current) return;
-    downloaded.current = true;
+    if (done.current) return;
+    done.current = true;
+
+    // Auto-download HTML report
     const html = generateHTMLReport(reportData);
     const safeName = candidateName.replace(/\s+/g, '-').toLowerCase();
     const date = new Date().toISOString().slice(0, 10);
     triggerDownload(html, `reporte-qa-${safeName}-${date}.html`);
+
+    // Auto-push JSON to GitHub if token is configured
+    if (hasToken()) {
+      setGithubStatus('saving');
+      saveReportToGitHub(reportData)
+        .then(() => setGithubStatus('saved'))
+        .catch(() => setGithubStatus('error'));
+    }
   }, [reportData, candidateName]);
-  const { earned, total, percentage, level, blockScores } = score;
-  const duration = formatDuration(durationSeconds);
 
   const levelMessages = {
-    Senior: 'Excelente desempeño. Dominas los conceptos avanzados de QA y automatización. Eres un recurso valioso para cualquier equipo.',
-    'Semi-Senior': 'Buen conocimiento base con áreas de crecimiento. Tienes experiencia sólida y potencial para avanzar al nivel Senior.',
-    Junior: 'Conoces los fundamentos del QA. Con práctica y estudio de los temas avanzados, podrás crecer rápidamente.',
-    'En Desarrollo': 'Hay fundamentos importantes por fortalecer. Te recomendamos estudiar los conceptos básicos de QA y testing.'
+    Senior: 'Excelente desempeño. Dominas los conceptos avanzados de QA y automatización.',
+    'Semi-Senior': 'Buen conocimiento base con áreas de crecimiento. Tienes experiencia sólida.',
+    Junior: 'Conoces los fundamentos del QA. Con práctica y estudio crecerás rápidamente.',
+    'En Desarrollo': 'Hay fundamentos importantes por fortalecer. Estudia los conceptos básicos de QA.',
   };
+
+  const githubMessage = {
+    idle: null,
+    saving: { text: '⏳ Guardando en GitHub...', color: '#f59e0b' },
+    saved: { text: '✅ Reporte guardado en GitHub', color: '#10b981' },
+    error: { text: '⚠️ No se pudo guardar en GitHub (token no configurado en este navegador)', color: '#ef4444' },
+  }[githubStatus];
 
   return (
     <div className="results-page">
       <div className="results-container">
 
-        {/* Hero */}
         <div className="results-hero" style={{ borderTop: `6px solid ${level.color}` }}>
           <div className="results-name">Evaluación completada: {candidateName}</div>
           <div className="results-score-ring">
@@ -69,7 +87,6 @@ export default function Results({ reportData, onRestart }) {
           </div>
         </div>
 
-        {/* Block breakdown */}
         <div className="results-blocks">
           <h2>Resultados por Bloque</h2>
           <div className="blocks-grid">
@@ -91,11 +108,17 @@ export default function Results({ reportData, onRestart }) {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="results-footer">
-          <div className="results-note">
-            <span>✅</span>
-            <span>Evaluación completada. El reporte HTML se descargó automáticamente.</span>
+          <div style={{ flex: 1 }}>
+            <div className="results-note">
+              <span>📄</span>
+              <span>Reporte HTML descargado automáticamente.</span>
+            </div>
+            {githubMessage && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: githubMessage.color, fontWeight: 500 }}>
+                {githubMessage.text}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
@@ -103,11 +126,10 @@ export default function Results({ reportData, onRestart }) {
               onClick={() => {
                 const html = generateHTMLReport(reportData);
                 const safeName = candidateName.replace(/\s+/g, '-').toLowerCase();
-                const date = new Date().toISOString().slice(0, 10);
-                triggerDownload(html, `reporte-qa-${safeName}-${date}.html`);
+                triggerDownload(html, `reporte-qa-${safeName}-${new Date().toISOString().slice(0,10)}.html`);
               }}
             >
-              ⬇ Descargar reporte nuevamente
+              ⬇ Descargar HTML
             </button>
             <button className="btn-primary" onClick={onRestart}>
               Nueva Evaluación
